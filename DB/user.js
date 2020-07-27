@@ -1,20 +1,39 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
-const user = mongoose.model('user',{
+const user = mongoose.model('guest',{
   firstName:{
-    type:String
+    type:String,
+    required:true,
+    trim:true,
+  },
+  email:{
+    type:String,
+    required:true,
+    trim:true,
+    lowercase:true,
+    validate(value){
+      if(!validator.isEmail(value)) throw new Error('not a valid email');
+    }
+  },
+  password:{
+    type:String,
+    required:true,
+    trim:true,
+    minlength:7,
+    validate(value){
+      if(value.toLowerCase().includes('password')) throw new Error('plz remove password word')
+    }
   },
   age:{
-    type:Number
+    type:Number,
+    default:0,
+    validate(value){
+      if(value<0){
+        throw new Error('Not a valid age');
+      }
+    }
   }
 });
-const me = new user({
-  firstName:'ajay',
-  age:23,
-})
 
-me.save().then((res)=>{
-console.log('res',me);
-}).catch((err)=>{
-console.log('err',err);
-});
+module.exports = user;

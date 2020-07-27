@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-
+const user = require('./DB/user');
 const connectDB = require('./DB/connection');
 const app = express();
 connectDB();
@@ -10,17 +10,10 @@ app.listen(Port,() => {
 console.log('Server started');
 });
 
-const user = mongoose.model('user',{
-  firstName:{
-    type:String
-  },
-  age:{
-    type:Number
-  }
-});
 const me = new user({
-  firstName:'ajay',
-  age:23,
+  firstName:'asssdvikash',
+  email:'Ajay@gmaIl.com  ',
+  password:'   h98passwoD ',
 })
 
 me.save().then((res)=>{
