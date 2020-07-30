@@ -1,25 +1,29 @@
 const express = require('express');
 const user = require('../../DB/user');
 const router = new express.Router();
+const auth = require('../middleware/auth');
 
 router.post('/users', async (req,res)=>{
   const newuser = new user(req.body);
 try{
-  await newuser.save()
-        res.status(201).send(newuser)
+  const User  = await newuser.save()
+  const token = await User.generateAuthToken();
+  
+        res.status(201).send({User,token})
    } catch(err){
    res.status(400).send(err);
      }
 });
 //////////////////////
-router.get('/users', async (req,res)=>{
+router.get('/users/me',auth, async (req,res)=>{
 
-try{
-const User =await user.find({});
-      res.send(User);
-}catch(e){
-       res.status(500).send(e);
-}
+  res.status(201).send(req.User)
+// try{
+// const User =await user.find({});
+//       res.send(User);
+// }catch(e){
+//        res.status(500).send(e);
+// }
 
 //   user.find({}).then((user1)=>{
 // res.send(user1);
@@ -40,6 +44,8 @@ router.get('/users/:id', async (req,res)=>{
  }catch(e){
        res.status(500).send(e);
  }
+})
+
 //  user.findById(_id).then((reslut)=>{
 //    if(!reslut){
 //      return res.status(404).send();
@@ -48,14 +54,25 @@ router.get('/users/:id', async (req,res)=>{
 //  }).catch((e)=>{
 //    res.status(500).send(e);
 //  })
-})
 //////////////
 router.patch('/users/:id',async (req,res)=>{
+  const updates = Object.keys(req.body);
+  const allowedUpdated = ['firstName','age','password','email'];
+  // console.log(updates);
+  const isValidUpdate = updates.every((update)=>allowedUpdated.includes(update));
+  // console.log(isValidUpdate);
+  if(!isValidUpdate){
+    return res.status(400).send();
+  }
   try{
-  const User = await user.findByIdAndUpdate(req.params.id,req.body,{new:true,runValidators:true})
+  const User = await user.findById(req.params.id);
   if(!User) {
     return res.status(404).send();
   }
+  updates.forEach((update)=>{
+    User[update]=req.body[update];
+  })
+   await User.save();
   res.status(200).send(User);
   }catch(e){
      res.status(402).send(e);
@@ -73,6 +90,38 @@ router.delete('/users/:id', async (req,res)=>{
 
   }catch(e){
 res.status(500).send(e);
+  }
+})
+////////
+
+router.post('/users/login', async (req,res)=>{
+  try{
+    const User = await user.findByCredentials(req.body.email,req.body.password);
+    const token = await User.generateAuthToken();
+    res.status(202).send({User,token});
+  }catch(e){
+res.status(400).send(e)
+  }
+})
+
+////
+router.post('/users/logout',auth,async(req,res)=>{
+  try{
+    req.User.tokens = req.User.tokens.filter((i)=> {return i.token !== req.token });
+    await req.User.save();
+    res.status(200).send('LOGOUTED');
+  }catch(e){
+    res.status(500).send(e);
+  }
+})
+/////
+router.post('/users/logoutAll',auth,async(req,res)=>{
+  try{
+    req.User.tokens = [];
+    await req.User.save();
+    res.status(200).send('LOGOUTED');
+  }catch(e){
+    res.status(500).send(e);
   }
 })
 
