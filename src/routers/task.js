@@ -1,11 +1,14 @@
 const express = require('express');
 const task = require('../../DB/task');
+const auth = require('../middleware/auth');
 
 const router = new express.Router();
 
 
-router.post('/task',(req,res)=>{
-  const newTask = new task(req.body);
+router.post('/task',auth,(req,res)=>{
+
+  const newTask = new task({
+    ...req.body,"owner":req.User._id});
   newTask.save().then(()=>{
     res.status(201).send(newTask)
 console.log('res',newTask);
@@ -16,18 +19,21 @@ console.log('err',err);
 });
 })
 
-router.get('/task',(req,res)=>{
-  task.find({}).then((tsk)=>{
-    res.status(201).send(tsk);
-  }).catch((e)=>{
-    res.status(404).send(e);
-  })
-})
+router.get('/task',auth,async(req,res)=>{
+  try{
+//  const Task=await task.find({owner:req.User._id})
+ await req.User.populate('tasks').execPopulate();
+  // populate('tasks').execPopulate();
 
-router.get('/task/:id',async (req,res)=>{
+    res.status(201).send(req.User.tasks);
+  }catch(e){
+    res.status(404).send(e);}
+  })
+
+router.get('/task/:id',auth,async (req,res)=>{
   const _id = req.params.id;
   try{
-   const Task = await task.findById(_id);
+   const Task = await task.findOne({_id,owner:req.User._id});
    if(!Task){
     return res.status(404).send();
   }
@@ -38,7 +44,7 @@ router.get('/task/:id',async (req,res)=>{
   }
   })
   ////
-  router.patch('/task/:id', async (req,res)=>{
+  router.patch('/task/:id', auth,async (req,res)=>{
 const updates = Object.keys(req.body);
 const allowedUpdate = ['description','completed'];
 const isValidUpdate = updates.every((update)=> allowedUpdate.includes(update));
@@ -46,7 +52,8 @@ if(!isValidUpdate){
   return res.status(400).send();
 }
     try{
-      const Task = await task.findByIdAndUpdate(req.params.id)
+      // const Task = await task.findById(req.params.id)
+      const Task = await task.findOne({_id:req.params.id,owner:req.User._id});
       if(!Task){
         return res.status(404).send();
       }
@@ -61,10 +68,10 @@ if(!isValidUpdate){
 
   })
 
-  router.delete('/task/:id', async (req,res)=>{
+  router.delete('/task/:id',auth, async (req,res)=>{
 
     try{
-     const Task = await task.findByIdAndDelete(req.params.id);
+     const Task = await task.findOneAndDelete({_id:req.params.id,owner:req.User._id});
      if(!Task){
       return res.status(404).send();
     }

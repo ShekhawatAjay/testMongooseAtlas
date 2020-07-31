@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const task = require('./task');
 
 const UserSchema = new mongoose.Schema({
   firstName:{
@@ -43,7 +44,15 @@ const UserSchema = new mongoose.Schema({
       required:true
     }
   }]
+},{
+  timestamps:true
 });
+
+UserSchema.virtual('tasks',{
+  ref:'task',
+  localField:'_id',
+  foreignField :'owner'
+})
 //////for login
 
 UserSchema.statics.findByCredentials = async (email, password) =>{
@@ -82,7 +91,7 @@ UserSchema.methods.generateAuthToken = async function(){
 /////// for pswd
 UserSchema.pre('save', async function(next){
   const user = this;
-  this.age="56";
+  // this.age="56";
   // console.log(user.isModified('password'))
    if(user.isModified('password')){
     //  console.log('yes i am working');
@@ -91,6 +100,13 @@ UserSchema.pre('save', async function(next){
    }
    next();
 });
+
+UserSchema.pre('remove', async function(next){
+  const user=this;
+  await task.deleteMany({owner:user._id})
+  next();
+})
+
 const user = mongoose.model('guest',UserSchema);
 
 module.exports = user;

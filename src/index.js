@@ -25,6 +25,22 @@ console.log('Server started');
 
 
 
+
+/////
+const task = require('../DB/task');
+const user = require('../DB/user');
+
+const myfunction= async()=>{
+    // const Task =await task.findById('5f23bf48fd8ce719a088adaf');
+    // await Task.populate('owner').execPopulate();
+    // console.log(Task.owner);
+// const User = await user.findById('5f22daee08850317244fbc1f');
+// await User.populate('tasks').execPopulate();
+// console.log(User.tasks);
+}
+myfunction();
+
+
 // const jwt = require('jsonwebtoken');
 
 // const myfunction = async () =>{

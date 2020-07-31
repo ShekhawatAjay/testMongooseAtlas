@@ -55,7 +55,7 @@ router.get('/users/:id', async (req,res)=>{
 //    res.status(500).send(e);
 //  })
 //////////////
-router.patch('/users/:id',async (req,res)=>{
+router.patch('/users/me',auth,async (req,res)=>{
   const updates = Object.keys(req.body);
   const allowedUpdated = ['firstName','age','password','email'];
   // console.log(updates);
@@ -65,29 +65,26 @@ router.patch('/users/:id',async (req,res)=>{
     return res.status(400).send();
   }
   try{
-  const User = await user.findById(req.params.id);
-  if(!User) {
-    return res.status(404).send();
-  }
-  updates.forEach((update)=>{
-    User[update]=req.body[update];
-  })
-   await User.save();
-  res.status(200).send(User);
-  }catch(e){
-     res.status(402).send(e);
-  }
+  const User = req.User;
+  updates.forEach((update)=>{ User[update]=req.body[update]; })
+      await User.save();
+      res.status(200).send(User);
+      }   
+      catch(e){
+               res.status(402).send(e);
+      }
 
 })
 ///////////
-router.delete('/users/:id', async (req,res)=>{
+router.delete('/users/me',auth, async (req,res)=>{
   try{
-    const User = await user.findByIdAndDelete(req.params.id);
-    if(!User){
-      return res.status(404).send();
-    }
-    res.status(200).send(User);
-
+  //   const User = await user.findByIdAndDelete(req.User._id);
+  //   if(!User){
+  //     return res.status(404).send();
+  //   }
+  //   res.status(200).send(User);
+   await req.User.remove();
+   res.status(200).send(req.User);
   }catch(e){
 res.status(500).send(e);
   }
