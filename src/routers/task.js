@@ -20,9 +20,24 @@ console.log('err',err);
 })
 
 router.get('/task',auth,async(req,res)=>{
-  try{
+  // console.log(req.query.completed)
+  const match={}
+  if(req.query.completed){
+    match.completed = (req.query.completed ==='true');
+  }
+  // console.log(match)
+    try{
 //  const Task=await task.find({owner:req.User._id})
- await req.User.populate('tasks').execPopulate();
+
+ await req.User.populate(
+   {path:'tasks',
+   match,
+   options:{
+     limit:parseInt(req.query.limit),
+     skip:parseInt(req.query.skip)
+   }
+}).execPopulate();
+
   // populate('tasks').execPopulate();
 
     res.status(201).send(req.User.tasks);
